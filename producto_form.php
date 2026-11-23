@@ -2,7 +2,6 @@
 session_start();
 require 'conexion.php';
 
-// Si no está logueado, mandar al login
 if (!isset($_SESSION['id_usuario'])) {
     header("Location: login.php");
     exit;
@@ -21,7 +20,7 @@ $producto = [
 ];
 $modo = "Crear";
 
-// Si viene un ID por URL, es modo editar
+// Si viene un ID, es modo editar
 if (isset($_GET['id'])) {
     $stmt = $pdo->prepare("SELECT * FROM productos WHERE id_producto = ?");
     $stmt->execute([$_GET['id']]);
@@ -29,25 +28,22 @@ if (isset($_GET['id'])) {
     $modo = "Editar";
 }
 
-// Obtener categorías para el select
+// Obtener categorías
 $categorias = $pdo->query("SELECT * FROM categorias WHERE estado = 1")->fetchAll();
 
-// Procesar el formulario
+// Procesar formulario
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $accion = $_POST['accion'] ?? '';
     
-
-    // Desactivar producto (borrado lógico)
-if ($accion == 'desactivar') {
-    // Agregamos un sufijo al código para liberarlo
-    $nuevo_codigo = $_POST['codigo'] . '_DESACTIVADO_' . time();
-    $stmt = $pdo->prepare("UPDATE productos SET estado = 0, codigo = ? WHERE id_producto = ?");
-    $stmt->execute([$nuevo_codigo, $_POST['id_producto']]);
-    header("Location: index.php");
-    exit;
-}
+    // Desactivar producto
+    if ($accion == 'desactivar') {
+        $nuevo_codigo = $_POST['codigo'] . '_DESACTIVADO_' . time();
+        $stmt = $pdo->prepare("UPDATE productos SET estado = 0, codigo = ? WHERE id_producto = ?");
+        $stmt->execute([$nuevo_codigo, $_POST['id_producto']]);
+        header("Location: index.php");
+        exit;
+    }
     
-    // Obtener datos del formulario
     $codigo = trim($_POST['codigo']);
     $nombre = trim($_POST['nombre']);
     $descripcion = trim($_POST['descripcion']);
@@ -57,11 +53,11 @@ if ($accion == 'desactivar') {
     $id_categoria = $_POST['id_categoria'];
     $id_producto = $_POST['id_producto'] ?? null;
 
-    // Validación PHP: no negativos
+    // Validación: no negativos
     if ($precio < 0 || $stock_actual < 0 || $stock_minimo < 0) {
         $mensaje = "<div class='alert alert-danger'>Los valores no pueden ser negativos</div>";
     } else {
-        // Validación PHP: código único
+        // Validación: código único
         $sql_check = "SELECT id_producto FROM productos WHERE codigo = ? AND estado = 1";
         $params = [$codigo];
         if ($id_producto) {
@@ -84,7 +80,6 @@ if ($accion == 'desactivar') {
                 $stmt = $pdo->prepare("INSERT INTO productos (codigo, nombre, descripcion, precio, stock_actual, stock_minimo, id_categoria) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([$codigo, $nombre, $descripcion, $precio, $stock_actual, $stock_minimo, $id_categoria]);
                 $mensaje = "<div class='alert alert-success'>Producto creado</div>";
-                // Limpiar el formulario
                 $producto = ['id_producto'=>'', 'codigo'=>'', 'nombre'=>'', 'descripcion'=>'', 'precio'=>'', 'stock_actual'=>'', 'stock_minimo'=>'', 'id_categoria'=>''];
             }
         }
@@ -123,15 +118,15 @@ if ($accion == 'desactivar') {
             </div>
             
             <div class="mb-3">
-                <label>Precio (en pesos chilenos) *</label>
-                <textarea name="descripcion" class="form-control"><?= $producto['descripcion'] ?></textarea>
+                <label>Descripción</label>
+                <textarea name="descripcion" class="form-control" rows="3"><?= $producto['descripcion'] ?></textarea>
             </div>
             
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label>Precio *</label>
+                    <label>Precio (en pesos chilenos) *</label>
                     <input type="number" name="precio" id="precio" class="form-control" 
-                           step="0.01" min="0" value="<?= $producto['precio'] ?>" required>
+                           step="1" min="0" value="<?= $producto['precio'] ?>" required>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label>Stock Actual *</label>
@@ -170,7 +165,6 @@ if ($accion == 'desactivar') {
     </div>
 </div>
 
-<!-- Validación JavaScript -->
 <script>
 function validarProducto() {
     const precio = parseFloat(document.getElementById('precio').value);
