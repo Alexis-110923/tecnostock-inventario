@@ -45,6 +45,7 @@ $productos = $stmt->fetchAll();
         </div>
         <div class="col-md-4 text-end">
             <a href="movimiento.php" class="btn btn-success">Registrar Movimiento</a>
+<a href="historial.php" class="btn btn-info">Ver Historial</a>
             <a href="producto_form.php" class="btn btn-secondary">Nuevo Producto</a>
         </div>
     </div>
